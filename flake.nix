@@ -16,7 +16,11 @@
   inputs = {
     # This has SBCL 2.4.10 and docktuil 3.1.3 which are known to work
     nixpkgs.url = "github:NixOS/nixpkgs/af51545ec9a44eadf3fe3547610a5cdd882bc34e";
-    cl-nix-lite.url = "github:hraban/cl-nix-lite";
+    cl-nix-lite = {
+      url = "github:hraban/cl-nix-lite";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.treefmt-nix.follows = "treefmt-nix";
+    };
     flake-compat = {
       # Use my own fixed-output-derivation branch because I don’t want users to
       # need to eval-time download dependencies.
@@ -28,7 +32,10 @@
       url = "flake-utils";
       inputs.systems.follows = "systems";
     };
-    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
