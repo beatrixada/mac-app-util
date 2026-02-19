@@ -1,5 +1,7 @@
 * (Nix) Utilities for Mac App launchers
 
+This is a fork of [[https://github.com/hraban/mac-app-util][hraban/mac-app-util]] with modifications by [[https://github.com/beatrixada][beatrixada]], 2026.
+
 This is a [[https://nixos.org][Nix]] module for Macintosh computers ("darwin") which fixes a few common problems encountered by users of Nix on Macs:
 
 - Launching .app programs from Spotlight
@@ -190,6 +192,7 @@ This helps register apps from outside of your =~/Applications= directory with Sp
 
 mac-app-util - Manage Mac App launchers
 Copyright © 2023–2025  Hraban Luyat
+Copyright © 2025–2026  beatrixada (fork modifications)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
