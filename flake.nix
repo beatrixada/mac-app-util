@@ -18,7 +18,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/af51545ec9a44eadf3fe3547610a5cdd882bc34e";
     flake-parts.url = "github:hercules-ci/flake-parts";
     cl-nix-lite = {
-      url = "github:hraban/cl-nix-lite";
+      url = "github:beatrixada/cl-nix-lite";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
       inputs.treefmt-nix.follows = "treefmt-nix";
