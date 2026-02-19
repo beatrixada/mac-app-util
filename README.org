@@ -1,6 +1,6 @@
 * (Nix) Utilities for Mac App launchers
 
-This is a [[https://nixos.org][Nix]] module for Macintosh computers (“darwin”) which fixes a few common problems encountered by users of Nix on Macs:
+This is a [[https://nixos.org][Nix]] module for Macintosh computers ("darwin") which fixes a few common problems encountered by users of Nix on Macs:
 
 - Launching .app programs from Spotlight
 - Pinning a .app in the Dock, even across Nix updates
@@ -13,7 +13,31 @@ You can also use it to create .app wrappers for non-.app programs, aka stand-alo
 
 It works in [[https://github.com/nix-community/home-manager][home-manager]] and [[https://github.com/LnL7/nix-darwin][nix-darwin]] by providing a module for both.  You just need to load the module, nothing else, and it will automatically run every time you =switch= your config.
 
-Home-manager and nix-darwin aren’t either-or: you can have both, and you can install .app bundles on your mac through both (some user specific using home-manager, some system wide using nix-darwin).  In that case you’d want to load both the nix-darwin module, and the home-manager module at the same time in their respective configurations.
+Home-manager and nix-darwin aren't either-or: you can have both, and you can install .app bundles on your mac through both (some user specific using home-manager, some system wide using nix-darwin).  In that case you'd want to load both the nix-darwin module, and the home-manager module at the same time in their respective configurations.
+
+*** flake-parts (recommended)
+
+If your flake uses [[https://flake.parts][flake-parts]], you can import mac-app-util as a flake module. This gives you access to all its outputs (packages, home-manager module, nix-darwin module) as a composable flake-parts module:
+
+#+begin_src nix
+{
+  inputs = {
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    mac-app-util.url = "github:hraban/mac-app-util";
+    # ...
+  };
+
+  outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+    imports = [
+      mac-app-util.flakeModules.default
+    ];
+    # mac-app-util's packages, checks, and formatter are now available
+    # in your perSystem config.
+  };
+}
+#+end_src
+
+The home-manager and nix-darwin modules are still available as =mac-app-util.homeManagerModules.default= and =mac-app-util.darwinModules.default= respectively, and can be used exactly as shown below.
 
 *** Flakes, just home-manager
 
@@ -108,75 +132,23 @@ Only using home-manager, no nix-darwin (yet)? You can import the home-manager mo
 }
 #+end_src
 
-*** Non-flakes, aka “channels”
-
-This is similar to the above. What will be different is the “plumbing”, i.e. how to get a reference to this app’s derivation. Here’s how:
-
-#+begin_src nix
-let
-  mac-app-util-src = builtins.fetchTarball "https://github.com/hraban/mac-app-util/archive/master.tar.gz";
-  # I advise using the long form with a pinned hash instead
-  mac-app-util-src = builtins.fetchTarball {
-    url = "https://github.com/hraban/mac-app-util/archive/abcdef123456abcdef123456.tar.gz";
-    # Run it once, lift the hash from the error, paste it here and run again
-    sha256 = "";
-  };
-  mac-app-util = import mac-app-util-src {};
-in
-
-# Now you have either the program as a derivation itself:
-mac-app-util.default
-
-# Or the home manager module:
-mac-app-util.homeManagerModules.default
-
-# Or darwin:
-mac-app-util.darwinModules.default
-#+end_src
-
-Example:
-
-#+begin_src nix
-{ config, pkgs, ... }:
-
-let
-  mac-app-util-src = builtins.fetchTarball "https://github.com/hraban/mac-app-util/archive/master.tar.gz";
-  mac-app-util = import mac-app-util-src {};
-in
-
-{
-  home = {
-    username = "jdoe";
-    homeDirectory = "/Users/jdoe";
-    stateVersion = "24.05";
-    packages = with pkgs; [
-      iterm2
-    ];
-  };
-  programs.home-manager.enable = true;
-  imports = [
-    mac-app-util.homeManagerModules.default
-  ];
-}
-#+end_src
-
 ** Commands
 
 At the core of this project is a (Nix-agnostic) program that can:
 
-- =mktrampoline= :: Create a “trampoline” launcher app
+- =mktrampoline= :: Create a "trampoline" launcher app
 - =sync-dock= :: Update persistent apps in the Dock
 - =sync-trampolines= :: Create a directory with trampolines to all your apps
 
 ** mktrampoline
 
-This creates a “trampoline” launcher app which is a simple wrapper application that just launches your actual application.
+This creates a "trampoline" launcher app which is a simple wrapper application that just launches your actual application.
 
 #+begin_src shell
 $ nix run github:hraban/mac-app-util -- mktrampoline /path/to/MyApp.app /Applications/MyApp.app
 #+end_src
 
-Intuitively, you would either fully copy & paste the original .app, or create a symlink or “alias”; all of those solutions have different problems and they don’t get indexed by Spotlight properly.
+Intuitively, you would either fully copy & paste the original .app, or create a symlink or "alias"; all of those solutions have different problems and they don't get indexed by Spotlight properly.
 
 This trampoline script is indexed by Spotlight and by Launchpad, so you can keep launching your apps using =⌘ SPC <appname> ⏎=
 
@@ -186,13 +158,13 @@ You can also wrap non-app stand-alone binaries with this. For example:
 $ nix run github:hraban/mac-app-util -- mktrampoline "$(which darktable)" ~/Applications/Darktable.app
 #+end_src
 
-Darktable is a photo editor available on Mac but without a .app bundle in the derivation. It’s just a stand-alone binary. Using mktrampoline, you can make it launchable from Spotlight.
+Darktable is a photo editor available on Mac but without a .app bundle in the derivation. It's just a stand-alone binary. Using mktrampoline, you can make it launchable from Spotlight.
 
 See https://github.com/nix-community/home-manager/issues/1341
 
 ** sync-dock
 
-When you have an app in your Dock which doesn’t live in =/Applications/..=, it can get stale: e.g. your app at =/foo/v1/Foo.app= gets replaced by =/foo/v2/Foo.app=. To automatically update the Dock to the new location of Foo, execute:
+When you have an app in your Dock which doesn't live in =/Applications/..=, it can get stale: e.g. your app at =/foo/v1/Foo.app= gets replaced by =/foo/v2/Foo.app=. To automatically update the Dock to the new location of Foo, execute:
 
 #+begin_src shell
 $ nix run github:hraban/mac-app-util -- sync-dock Foo.app
@@ -200,7 +172,7 @@ $ nix run github:hraban/mac-app-util -- sync-dock Foo.app
 
 It will find an old persistent item by the name of "Foo" and update it to the new location.
 
-N.B.: This is currently limited only to Nix apps, but actually it could work for anything. I’ve just kept it conservative to be on the safe side.
+N.B.: This is currently limited only to Nix apps, but actually it could work for anything. I've just kept it conservative to be on the safe side.
 
 ** sync-trampolines
 
