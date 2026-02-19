@@ -14,8 +14,7 @@
 
 {
   inputs = {
-    # This has SBCL 2.4.10 and docktuil 3.1.3 which are known to work
-    nixpkgs.url = "github:NixOS/nixpkgs/af51545ec9a44eadf3fe3547610a5cdd882bc34e";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-parts.url = "github:hercules-ci/flake-parts";
     cl-nix-lite = {
       url = "github:beatrixada/cl-nix-lite";
